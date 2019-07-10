@@ -1,13 +1,25 @@
-import json
+
 from pathlib import Path
 from collections import namedtuple
 from enum import Enum
 from tempfile import TemporaryDirectory
 import subprocess
 from subprocess import DEVNULL, TimeoutExpired
+from dataclasses import dataclass
+import jsons
+from typing import List
 
-KERNEL_PRIMITIVES = json.load((Path(__file__).parent / 'kernel.json').open(),
-                              object_hook=lambda d: namedtuple('Primitives', d.keys())(*d.values()))
+
+@dataclass
+class Primitives:
+    commands: List[str]
+    environments: List[str]
+
+
+KERNEL_PRIMITIVES_JSON = (Path(__file__).parent / 'kernel.json').read_text()
+
+KERNEL_PRIMITIVES = jsons.loads(
+    KERNEL_PRIMITIVES_JSON, Primitives, key_transformer=jsons.KEY_TRANSFORMER_SNAKECASE)
 
 
 class Format(Enum):
