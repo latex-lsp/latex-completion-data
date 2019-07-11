@@ -1,13 +1,12 @@
 
 from pathlib import Path
-from collections import namedtuple
 from enum import Enum
 from tempfile import TemporaryDirectory
 import subprocess
 from subprocess import DEVNULL, TimeoutExpired
 from dataclasses import dataclass
-import jsons
 from typing import List
+import util
 
 
 @dataclass
@@ -16,10 +15,7 @@ class Primitives:
     environments: List[str]
 
 
-KERNEL_PRIMITIVES_JSON = (Path(__file__).parent / 'kernel.json').read_text()
-
-KERNEL_PRIMITIVES = jsons.loads(
-    KERNEL_PRIMITIVES_JSON, Primitives, key_transformer=jsons.KEY_TRANSFORMER_SNAKECASE)
+KERNEL_PRIMITIVES = util.load_json('kernel.json', Primitives)
 
 
 class Format(Enum):

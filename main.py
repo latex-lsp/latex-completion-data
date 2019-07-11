@@ -1,5 +1,7 @@
 import logging
 from timeit import default_timer as timer
+import symbols
+import tex
 
 
 def main():
