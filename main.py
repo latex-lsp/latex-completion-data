@@ -1,14 +1,14 @@
 import logging
-from time import time
+from timeit import default_timer as timer
 
 
 def main():
     logging.basicConfig(
         format='%(levelname)-8s %(message)s', level=logging.DEBUG)
 
-    start_time = time()
+    start_time = timer()
     print('Hello World!')
-    end_time = time()
+    end_time = timer()
 
     logging.info('Elapsed time: %d seconds', end_time - start_time)
 
