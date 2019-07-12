@@ -152,8 +152,5 @@ def render_package(package):
 
 
 def render_database():
-    logging.info("Rendering symbols")
-    packages = [render_package(package)
-                for package in SYMBOL_DATABASE.packages]
-    logging.info("Finished rendering symbols")
-    return RenderedSymbolDatabase(packages)
+    return RenderedSymbolDatabase([render_package(package)
+                                   for package in SYMBOL_DATABASE.packages])
