@@ -31,6 +31,9 @@ class CompilationResult:
     def find(self, ext):
         return Path(self.tmpdir.name) / 'code.{}'.format(ext)
 
+    def find_img(self, index):
+        return Path(self.tmpdir.name) / 'code{}.png'.format(index)
+
     def read_log(self):
         return self.find('log').read_text(errors='replace')
 
