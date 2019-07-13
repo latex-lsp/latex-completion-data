@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 import util
-from typing import List, Dict
+from typing import List, Dict, Optional
 import logging
 import tex
 import subprocess
@@ -8,149 +8,145 @@ from subprocess import DEVNULL
 from pathlib import Path
 import base64
 import imaging
-
-
-class SymbolError(Exception):
-    pass
+from tqdm import tqdm
+import sys
 
 
 @dataclass
-class SymbolCommandArgument:
+class UnrenderedSymbolCommandArgument:
     name: str
     code: str
 
 
 @dataclass
-class SymbolCommand:
+class UnrenderedSymbolCommand:
     name: str
-    code: str
-    arguments: List[List[SymbolCommandArgument]]
+    code: Optional[str]
+    parameters: List[List[UnrenderedSymbolCommandArgument]]
 
 
 @dataclass
-class SymbolPackage:
-    name: str
+class UnrenderedSymbolPackage:
+    name: Optional[str]
     font_encoding: str
-    commands: List[SymbolCommand]
+    commands: List[UnrenderedSymbolCommand]
 
-
-@dataclass
-class SymbolDatabase:
-    packages: List[SymbolPackage]
-
-
-SYMBOL_DATABASE = util.load_json('symbols.json', SymbolDatabase)
-
-
-@dataclass
-class RenderedSymbolCommandArgument:
-    name: str
-    image: str
-
-
-@dataclass
-class RenderedSymbolCommand:
-    name: str
-    image: str
-    arguments: List[List[RenderedSymbolCommandArgument]]
-
-
-@dataclass
-class RenderedSymbolPackage:
-    name: str
-    commands: List[RenderedSymbolCommand]
-
-
-@dataclass
-class RenderedSymbolDatabase:
-    packages: List[RenderedSymbolPackage]
-
-
-def build_render_code(package):
-    def build_render_code_fragment(lines, code):
-        lines.append("\\begin{center}")
-        lines.append(code)
-        lines.append("\\end{center}")
-
-    lines = []
-    lines.append(
-        "\\documentclass[preview, varwidth,margin=3pt, multi=yes]{standalone}")
-    lines.append("\\standaloneenv{center}")
-    lines.append("\\usepackage[utf8]{inputenc}")
-    lines.append(f"\\usepackage[{package.font_encoding}]{{fontenc}}")
-    if package.name != '':
-        lines.append(f"\\usepackage{{{package.name}}}")
-    lines.append("\\begin{document}")
-    for command in package.commands:
-        if command.code:
-            build_render_code_fragment(lines, command.code)
-
-        for parameter in command.arguments:
-            for argument in parameter:
-                build_render_code_fragment(lines, argument.code)
-    lines.append('\\end{document}')
-    return '\n'.join(lines)
-
-
-def count_symbols(package):
-    symbol_count = 0
-    for command in package.commands:
-        if command.code:
-            symbol_count += 1
-        for parameter in command.arguments:
-            symbol_count += len(parameter)
-    return symbol_count
-
-
-def render_package(package):
-    display_name = package.name or 'kernel'
-    symbol_count = count_symbols(package)
-    logging.info('Rendering symbols of package "%s" (%i symbols)',
-                 display_name, symbol_count)
-
-    latex_result = tex.compile(build_render_code(package), timeout=60)
-    dvi_path = latex_result.find('dvi')
-    if not dvi_path.exists():
-        logging.error('Failed to render package "%s" (compilation error)\nLog:\n%s',
-                      display_name, latex_result.read_log())
-        raise SymbolError()
-
-    dvipng_cmd = ['dvipng', '-D', '4096', str(dvi_path)]
-    dvipng_result = subprocess.run(dvipng_cmd, cwd=latex_result.tmpdir.name,
-                                   stdout=DEVNULL, stderr=DEVNULL)
-    dvipng_result.check_returncode()
-
-    images = []
-    for i in range(symbol_count):
-        logging.debug('Cropping image %i', i + 1)
-        image = latex_result.find_img(i + 1)
-        imaging.crop_and_scale(image)
-        images.append(base64.b64encode(image.read_bytes()).decode('utf-8'))
-
-    image_index = 0
-    commands = []
-    for command in package.commands:
-        command_image = None
-        if command.code:
-            command_image = images[image_index]
-            image_index += 1
-
-        all_arguments = []
-        for parameter in command.arguments:
-            arguments = []
-            for argument in parameter:
-                argument_image = images[image_index]
+    def render(self):
+        rendered_package = SymbolPackage(self.name)
+        latex_result = tex.compile(self._build_render_code(), timeout=60)
+        self._render_images(latex_result)
+        images = self._load_images(latex_result)
+        image_index = 0
+        for cmd in self.commands:
+            cmd_image = None
+            if cmd.code:
+                cmd_image = images[image_index]
                 image_index += 1
-                arguments.append(
-                    RenderedSymbolCommandArgument(argument.name, argument_image))
-            all_arguments.append(arguments)
 
-        commands.append(RenderedSymbolCommand(
-            command.name, command_image, all_arguments))
+            rendered_cmd = SymbolCommand(cmd.name, cmd_image)
+            for parameter in cmd.parameters:
+                args = []
+                for arg in parameter:
+                    arg_image = images[image_index]
+                    image_index += 1
+                    args.append(SymbolCommandArgument(arg.name, arg_image))
+                rendered_cmd.parameters.append(args)
 
-    return RenderedSymbolPackage(package.name, commands)
+            rendered_package.commands.append(rendered_cmd)
+        return rendered_package
+
+    def _build_render_code_header(self, lines):
+        lines.append(
+            "\\documentclass[preview, varwidth,margin=3pt, multi=yes]{standalone}")
+        lines.append("\\standaloneenv{center}")
+        lines.append("\\usepackage[utf8]{inputenc}")
+        lines.append(f"\\usepackage[{self.font_encoding}]{{fontenc}}")
+        if self.name:
+            lines.append(f"\\usepackage{{{self.name}}}")
+
+    def _build_render_code(self):
+        def build_fragment(lines, code):
+            lines.append("\\begin{center}")
+            lines.append(code)
+            lines.append("\\end{center}")
+
+        lines = []
+        self._build_render_code_header(lines)
+        lines.append("\\begin{document}")
+        for command in self.commands:
+            if command.code:
+                build_fragment(lines, command.code)
+
+            for parameter in command.parameters:
+                for argument in parameter:
+                    build_fragment(lines, argument.code)
+
+        lines.append('\\end{document}')
+        return '\n'.join(lines)
+
+    def _render_images(self, latex_result):
+        display_name = self.name or "kernel"
+        dvi_path = latex_result.find('dvi')
+        if not dvi_path.exists():
+            logging.error('Failed to render symbols of package "%s"\nLog:\n%s',
+                          display_name, latex_result.read_log())
+            sys.exit(-1)
+
+        dvipng_cmd = ['dvipng', '-D', '4096', str(dvi_path)]
+        dvipng_result = subprocess.run(dvipng_cmd, cwd=latex_result.tmpdir.name,
+                                       stdout=DEVNULL, stderr=DEVNULL)
+        dvipng_result.check_returncode()
+
+    def _count_symbols(self):
+        count = 0
+        for command in self.commands:
+            if command.code:
+                count += 1
+            for parameter in command.parameters:
+                count += len(parameter)
+        return count
+
+    def _load_images(self, latex_result):
+        symbol_count = self._count_symbols()
+        images = []
+        for i in range(symbol_count):
+            logging.debug('Cropping image %i', i + 1)
+            image = latex_result.find_img(i + 1)
+            imaging.crop_and_scale(image)
+            images.append(base64.b64encode(image.read_bytes()).decode('utf-8'))
+        return images
 
 
-def render_database():
-    return RenderedSymbolDatabase([render_package(package)
-                                   for package in SYMBOL_DATABASE.packages])
+@dataclass
+class UnrenderedSymbolDatabase:
+    packages: List[UnrenderedSymbolPackage]
+
+    def render(self):
+        packages = []
+        pbar = tqdm(self.packages)
+        for package in pbar:
+            pbar.set_description(package.name or "kernel")
+            packages.append(package.render())
+        return packages
+
+
+SYMBOL_DATABASE = util.load_json('symbols.json', UnrenderedSymbolDatabase)
+
+
+class SymbolCommandArgument:
+    def __init__(self, name, image):
+        self.name = name
+        self.image = image
+
+
+class SymbolCommand:
+    def __init__(self, name, image):
+        self.name = name
+        self.image = image
+        self.parameters = []
+
+
+class SymbolPackage:
+    def __init__(self, name):
+        self.name = name
+        self.commands = []
