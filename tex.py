@@ -58,7 +58,11 @@ def compile(code, fmt=Format.LATEX, timeout=10):
                        stdout=DEVNULL, stderr=DEVNULL)
         return CompilationResult(tmpdir)
     except TimeoutExpired as error:
-        tmpdir.cleanup()
+        try:
+            tmpdir.cleanup()
+        except OSError:
+            pass
+
         raise error
 
 
