@@ -7,8 +7,8 @@ import components
 
 
 def main():
-    logging.basicConfig(
-        format='%(levelname)-8s %(message)s', level=logging.INFO)
+    logging.basicConfig(format='%(levelname)-8s %(message)s',
+                        level=logging.INFO, filename='latex-completion-data.log', filemode='w')
 
     start_time = timer()
     component_database = components.generate_database()
