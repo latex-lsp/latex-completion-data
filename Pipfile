@@ -11,6 +11,8 @@ rope = "*"
 [packages]
 jsons = "*"
 pillow = "*"
+tarjan = "*"
+tqdm = "*"
 
 [requires]
 python_version = "3.7"

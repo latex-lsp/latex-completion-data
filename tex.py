@@ -1,4 +1,3 @@
-
 from pathlib import Path
 from enum import Enum
 from tempfile import TemporaryDirectory
@@ -7,6 +6,7 @@ from subprocess import DEVNULL, TimeoutExpired
 from dataclasses import dataclass
 from typing import List
 import util
+import logging
 
 
 @dataclass
@@ -22,6 +22,16 @@ class Format(Enum):
     LATEX = 'latex'
     LUALATEX = 'lualatex'
     XELATEX = 'xelatex'
+
+    @staticmethod
+    def from_file(file):
+        file = str(file)
+        if "lua" in file:
+            return Format.LUALATEX
+        elif "xe" in file:
+            return Format.XELATEX
+        else:
+            return Format.LATEX
 
 
 class CompilationResult:
@@ -52,10 +62,14 @@ def compile(code, fmt=Format.LATEX, timeout=10):
         raise error
 
 
+TEX_DIR_PATTERNS = ['tex/plain/**', 'tex/generic/**', 'tex/latex/**', 'tex/luatex/**',
+                    'tex/lualatex/**', 'tex/xetex/**', 'tex/xelatex/**']
+
+
 class FileResolver:
     def __init__(self):
         root_dir = self._find_root_dir()
-        self.files_by_name = {x: x.name for x in self._read_database(root_dir)}
+        self.files_by_name = {x.name: x for x in self._read_database(root_dir)}
 
     def _find_root_dir(self):
         cmd = ['kpsewhich', '--var-value', 'TEXMFDIST']
@@ -71,7 +85,10 @@ class FileResolver:
         for line in lines:
             if line.endswith(':'):
                 current_dir = root_dir / line[:-1]
-            else:
-                file = current_dir.joinpath(line)
+            elif any(current_dir.match(pat) for pat in TEX_DIR_PATTERNS):
+                file = current_dir / (line)
                 if file.suffix:
                     yield file
+
+
+FILE_RESOLVER = FileResolver()

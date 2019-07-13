@@ -3,6 +3,7 @@ from timeit import default_timer as timer
 import symbols
 import tex
 import util
+import components
 
 
 def main():
@@ -10,6 +11,7 @@ def main():
         format='%(levelname)-8s %(message)s', level=logging.INFO)
 
     start_time = timer()
+    component_database = components.generate_database()
     symbol_database = symbols.render_database()
     end_time = timer()
 
