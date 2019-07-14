@@ -17,7 +17,7 @@ steps:
     displayName: "Install Python tools"
   - script: pipenv install
     displayName: "Install dependencies"
-  - script: pipenv run main.py
+  - script: pipenv run python main.py
     displayName: "Build completion database"
   - powershell: |
       $version=$(Get-Date -Format "yy.MM");
