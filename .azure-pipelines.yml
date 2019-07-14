@@ -1,0 +1,33 @@
+trigger: none
+pr: none
+schedules:
+  - cron: "0 0 1 * *"
+    displayName: Monthly build
+    branches:
+      include:
+        - "*"
+    always: true
+pool:
+  vmImage: "ubuntu-16.04"
+steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: "3.7"
+  - script: python -m pip install --upgrade pip setuptools wheel pipenv
+    displayName: "Install Python tools"
+  - script: pipenv install
+    displayName: "Install dependencies"
+  - script: pipenv run main.py
+    displayName: "Build completion database"
+  - powershell: |
+      $version=$(Get-Date -Format "yy.MM");
+      Write-Host "##vso[task.setvariable variable=calVer]$version"
+    displayName: "Set release tag variable"
+  - task: GitHubRelease@0
+    inputs:
+      gitHubConnection: latex-lsp
+      repositoryName: latex-lsp/latex-completion-data
+      assets: "$(Build.SourcesDirectory)/completion.json"
+      tagSource: "manual"
+      tag: "$(calVer)"
+    displayName: "Publish to GitHub"
