@@ -7,6 +7,7 @@ schedules:
       include:
         - "*"
     always: true
+timeoutInMinutes: 0
 pool:
   vmImage: "macos-10.14"
 steps:
