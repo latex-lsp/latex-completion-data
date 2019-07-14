@@ -19,6 +19,8 @@ steps:
     displayName: "Install dependencies"
   - script: pipenv run python main.py
     displayName: "Build completion database"
+  - publish: $(System.DefaultWorkingDirectory)/latex-completion-data.log
+    artifact: latex-completion-data.log
   - powershell: |
       $version=$(Get-Date -Format "yy.MM");
       Write-Host "##vso[task.setvariable variable=calVer]$version"
@@ -27,7 +29,7 @@ steps:
     inputs:
       gitHubConnection: latex-lsp
       repositoryName: latex-lsp/latex-completion-data
-      assets: "$(Build.SourcesDirectory)/completion.json"
+      assets: "$(System.DefaultWorkingDirectory)/completion.json"
       tagSource: "manual"
       tag: "$(calVer)"
     displayName: "Publish to GitHub"
