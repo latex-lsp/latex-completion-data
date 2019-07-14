@@ -8,16 +8,26 @@ schedules:
         - "*"
     always: true
 pool:
-  vmImage: "ubuntu-16.04"
+  vmImage: "macos-10.14"
 steps:
+  - script: |
+      brew cask install mactex-no-gui
+      echo "##vso[task.prependpath]/Library/TeX/texbin"
+    displayName: "Install MacTeX"
+  - script: |
+      sudo tlmgr update --self --all --reinstall-forcibly-removed
+    displayName: "Update all TeX packages"
   - task: UsePythonVersion@0
     inputs:
       versionSpec: "3.7"
-  - script: python -m pip install --upgrade pip setuptools wheel pipenv
+  - script: |
+      python -m pip install --upgrade pip setuptools wheel pipenv
     displayName: "Install Python tools"
-  - script: pipenv install
-    displayName: "Install dependencies"
-  - script: pipenv run python main.py
+  - script: |
+      pipenv install
+    displayName: "Install script dependencies"
+  - script: |
+      pipenv run python main.py
     displayName: "Build completion database"
   - publish: $(System.DefaultWorkingDirectory)/latex-completion-data.log
     artifact: latex-completion-data.log
