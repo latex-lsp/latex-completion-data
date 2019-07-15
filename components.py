@@ -4,6 +4,7 @@ import logging
 from tarjan import tarjan
 from subprocess import TimeoutExpired
 from tqdm import tqdm
+from appendix import APPENDIX
 
 FILE_REGEX = re.compile(r'[^\s\r\n]+\.(?:sty|tex|def|cls)')
 PRIMITIVE_REGEX = re.compile(r'[a-zA-Z]+')
@@ -128,10 +129,22 @@ def analyze(file, components_by_name, pbar):
             logging.warn(f'Could not analyze {file}.')
 
 
+def include_appendix(components_by_name):
+    for src_component in APPENDIX.components:
+        dst_component = components_by_name[src_component.name]
+        dst_component.commands.extend(src_component.commands)
+        dst_component.commands = list(dict.fromkeys(dst_component.commands))
+        dst_component.environments.extend(src_component.environments)
+        dst_component.environments = list(
+            dict.fromkeys(dst_component.environments))
+    pass
+
+
 def generate_database():
     components_by_name = {}
     pbar = tqdm(tex.FILE_RESOLVER.files_by_name.items())
     for name, file in pbar:
         if file.suffix in COMPONENT_EXTS and name not in components_by_name:
             analyze(file, components_by_name, pbar)
+    include_appendix(components_by_name)
     return components_by_name.values()

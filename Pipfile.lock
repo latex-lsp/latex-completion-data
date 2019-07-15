@@ -58,7 +58,8 @@
         },
         "tarjan": {
             "hashes": [
-                "sha256:cffa9147e3bb80d60e72a3c692dd53145e19b14bc68b4452b5a5ee1a4cff9c6d"
+                "sha256:cffa9147e3bb80d60e72a3c692dd53145e19b14bc68b4452b5a5ee1a4cff9c6d",
+                "sha256:d352d3330c83f3b171460b7ba92a7be4805e84acabf2147cc3ea13c06c91efbb"
             ],
             "index": "pypi",
             "version": "==0.2.3.2"
@@ -86,14 +87,6 @@
             ],
             "index": "pypi",
             "version": "==1.4.4"
-        },
-        "colorama": {
-            "hashes": [
-                "sha256:05eed71e2e327246ad6b38c540c4a3117230b19679b875190486ddd2d721422d",
-                "sha256:f8ac84de7840f5b9c4e3347b3c1eaa50f7e49c2b07596221daec5edaabbd7c48"
-            ],
-            "markers": "sys_platform == 'win32'",
-            "version": "==0.4.1"
         },
         "isort": {
             "hashes": [
