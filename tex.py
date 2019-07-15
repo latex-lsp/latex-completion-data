@@ -66,8 +66,8 @@ def compile(code, fmt=Format.LATEX, timeout=10):
         raise error
 
 
-TEX_DIR_PATTERNS = ['tex/plain/**', 'tex/generic/**', 'tex/latex/**', 'tex/luatex/**',
-                    'tex/lualatex/**', 'tex/xetex/**', 'tex/xelatex/**']
+TEX_DIR_PATTERNS = ['tex/plain/**', 'tex/generic/**', 'tex/latex/**', 'tex/latex/pgf/**',
+                    'tex/luatex/**', 'tex/lualatex/**', 'tex/xetex/**', 'tex/xelatex/**']
 
 
 class FileResolver:
