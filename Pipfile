@@ -11,6 +11,8 @@ rope = "*"
 [packages]
 jsons = "*"
 pillow = "*"
+pypandoc = "*"
+requests = "*"
 tarjan = "*"
 tqdm = "*"
 

@@ -4,11 +4,13 @@ import symbols
 import tex
 import util
 import components
+import metadata
 
 
 class Database:
     def __init__(self):
         self.components = []
+        self.metadata = []
 
     def find_package(self, name):
         for component in self.components:
@@ -38,6 +40,13 @@ class Command:
         pass
 
 
+class Metadata:
+    def __init__(self, name, caption, description):
+        self.name = name
+        self.caption = caption
+        self.description = description
+
+
 def main():
     logging.basicConfig(format='%(levelname)-8s %(message)s',
                         level=logging.INFO, filename='latex-completion-data.log', filemode='w')
@@ -61,6 +70,8 @@ def main():
                 if src_command.name == dst_command.name:
                     dst_command.image = src_command.image
                     dst_command.parameters = src_command.parameters
+
+    database.metadata = metadata.query_all()
 
     util.save_json('completion.json', database)
     end_time = timer()
