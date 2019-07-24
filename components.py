@@ -111,14 +111,9 @@ def _build_testcode_header(file):
     return code
 
 
-def analyze(file, components_by_name, pbar):
-    pbar.set_description(file.name)
-
-    components = LatexDependency(file).load_components(components_by_name)
-    for component in components:
+def analyze(file, components_by_name):
+    for component in LatexDependency(file).load_components(components_by_name):
         dependency = component[0]
-        pbar.set_description(dependency.file.name)
-
         loaded_refs = [components_by_name[ref.name]
                        for ref in dependency.references() if ref.name in components_by_name]
         try:
@@ -142,9 +137,8 @@ def include_appendix(components_by_name):
 
 def generate_database():
     components_by_name = {}
-    pbar = tqdm(tex.FILE_RESOLVER.files_by_name.items())
-    for name, file in pbar:
+    for name, file in tqdm(tex.FILE_RESOLVER.files_by_name.items(), desc='Indexing packages'):
         if file.suffix in COMPONENT_EXTS and name not in components_by_name:
-            analyze(file, components_by_name, pbar)
+            analyze(file, components_by_name)
     include_appendix(components_by_name)
     return components_by_name.values()

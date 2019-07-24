@@ -51,7 +51,6 @@ def main():
     logging.basicConfig(format='%(levelname)-8s %(message)s',
                         level=logging.INFO, filename='latex-completion-data.log', filemode='w')
 
-    start_time = timer()
     database = Database()
     database.components.append(Component([], [],
                                          [Command(x)
@@ -72,10 +71,7 @@ def main():
                     dst_command.parameters = src_command.parameters
 
     database.metadata = metadata.query_all()
-
     util.save_json('completion.json', database)
-    end_time = timer()
-    logging.info('Elapsed time: %d seconds', end_time - start_time)
 
 
 if __name__ == '__main__':

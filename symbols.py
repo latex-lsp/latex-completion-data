@@ -123,9 +123,7 @@ class UnrenderedSymbolDatabase:
 
     def render(self):
         packages = []
-        pbar = tqdm(self.packages)
-        for package in pbar:
-            pbar.set_description(package.name or "kernel")
+        for package in tqdm(self.packages, desc='Rendering symbols'):
             packages.append(package.render())
         return packages
 
