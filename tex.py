@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from typing import List
 import util
 import logging
+from tqdm import tqdm
 
 
 @dataclass
@@ -82,11 +83,11 @@ class FileResolver:
 
     def _read_database(self, root_dir):
         db_file = root_dir / 'ls-R'
-        lines = (x for x in db_file.read_text().splitlines()
-                 if x and not x.isspace() and not x.startswith('%'))
+        lines = list(x for x in db_file.read_text().splitlines()
+                     if x and not x.isspace() and not x.startswith('%'))
 
         current_dir = None
-        for line in lines:
+        for line in tqdm(lines, desc='Loading resolver'):
             if line.endswith(':'):
                 current_dir = root_dir / line[:-1]
             elif any(current_dir.match(pat) for pat in TEX_DIR_PATTERNS):
