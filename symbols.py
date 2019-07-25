@@ -1,15 +1,19 @@
+from base64 import b64encode
 from dataclasses import dataclass
-import util
+from pathlib import Path
+from PIL import Image, ImageOps
+from io import BytesIO
+from tqdm import tqdm
 from typing import List, Dict, Optional
+import util
 import logging
 import tex
-import subprocess
-from subprocess import DEVNULL
-from pathlib import Path
 import base64
-import imaging
-from tqdm import tqdm
-import sys
+import pdf2image
+
+
+SYMBOL_SIZE = (48, 48)
+SYMBOL_PADDING = 5
 
 
 @dataclass
@@ -33,9 +37,11 @@ class UnrenderedSymbolPackage:
 
     def render(self):
         rendered_package = SymbolPackage(self.name)
-        latex_result = tex.compile(self._build_render_code(), timeout=60)
-        self._render_images(latex_result)
-        images = self._load_images(latex_result)
+        result = tex.compile(self._build_render_code(), timeout=60, pdf=True)
+        pdf_path = result.find('pdf')
+        images = [self._postprocess_image(img)
+                  for img in pdf2image.convert_from_path(str(pdf_path), dpi=4096)]
+
         image_index = 0
         for cmd in self.commands:
             cmd_image = None
@@ -84,18 +90,14 @@ class UnrenderedSymbolPackage:
         lines.append('\\end{document}')
         return '\n'.join(lines)
 
-    def _render_images(self, latex_result):
-        display_name = self.name or "kernel"
-        dvi_path = latex_result.find('dvi')
-        if not dvi_path.exists():
-            logging.error('Failed to render symbols of package "%s"\nLog:\n%s',
-                          display_name, latex_result.read_log())
-            sys.exit(-1)
+    def _postprocess_image(self, image):
+        image = image.crop(ImageOps.invert(image).getbbox())
+        image = image.resize(SYMBOL_SIZE, resample=Image.BILINEAR)
+        image = ImageOps.expand(image, SYMBOL_PADDING, (255, 255, 255))
 
-        dvipng_cmd = ['dvipng', '-D', '4096', str(dvi_path)]
-        dvipng_result = subprocess.run(dvipng_cmd, cwd=latex_result.tmpdir.name,
-                                       stdout=DEVNULL, stderr=DEVNULL)
-        dvipng_result.check_returncode()
+        buf = BytesIO()
+        image.save(buf, format='PNG')
+        return b64encode(buf.getvalue())
 
     def _count_symbols(self):
         count = 0
@@ -105,16 +107,6 @@ class UnrenderedSymbolPackage:
             for parameter in command.parameters:
                 count += len(parameter)
         return count
-
-    def _load_images(self, latex_result):
-        symbol_count = self._count_symbols()
-        images = []
-        for i in range(symbol_count):
-            logging.debug('Cropping image %i', i + 1)
-            image = latex_result.find_img(i + 1)
-            imaging.crop_and_scale(image)
-            images.append(base64.b64encode(image.read_bytes()).decode('utf-8'))
-        return images
 
 
 @dataclass

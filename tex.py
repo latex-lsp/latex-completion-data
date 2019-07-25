@@ -42,20 +42,19 @@ class CompilationResult:
     def find(self, ext):
         return Path(self.tmpdir.name) / 'code.{}'.format(ext)
 
-    def find_img(self, index):
-        return Path(self.tmpdir.name) / 'code{}.png'.format(index)
-
     def read_log(self):
         return self.find('log').read_text(errors='replace')
 
 
-def compile(code, fmt=Format.LATEX, timeout=10):
+def compile(code, fmt=Format.LATEX, timeout=10, pdf=False):
     tmpdir = TemporaryDirectory()
     (Path(tmpdir.name) / 'code.tex').write_text(code)
-    cmd = [fmt.value, '-interaction=batchmode',
-           '-shell-escape', 'code.tex']
+
+    flags = ['-interaction=batchmode', '-shell-escape']
+    if pdf:
+        flags.append('-output-format=pdf')
     try:
-        subprocess.run(cmd, cwd=tmpdir.name, timeout=timeout,
+        subprocess.run([fmt.value, *flags, 'code.tex'], cwd=tmpdir.name, timeout=timeout,
                        stdout=DEVNULL, stderr=DEVNULL)
         return CompilationResult(tmpdir)
     except TimeoutExpired as error:
