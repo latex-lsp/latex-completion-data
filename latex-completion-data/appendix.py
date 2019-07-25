@@ -16,4 +16,4 @@ class Appendix:
     pass
 
 
-APPENDIX = util.load_json('appendix.json', Appendix)
+APPENDIX = util.load_json('data/appendix.json', Appendix)

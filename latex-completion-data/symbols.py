@@ -120,7 +120,7 @@ class UnrenderedSymbolDatabase:
         return packages
 
 
-SYMBOL_DATABASE = util.load_json('symbols.json', UnrenderedSymbolDatabase)
+SYMBOL_DATABASE = util.load_json('data/symbols.json', UnrenderedSymbolDatabase)
 
 
 class SymbolCommandArgument:

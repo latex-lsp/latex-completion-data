@@ -16,7 +16,7 @@ class Primitives:
     environments: List[str]
 
 
-KERNEL_PRIMITIVES = util.load_json('kernel.json', Primitives)
+KERNEL_PRIMITIVES = util.load_json('data/kernel.json', Primitives)
 
 
 class Format(Enum):
