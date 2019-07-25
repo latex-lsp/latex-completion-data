@@ -1,6 +1,9 @@
+import multiprocessing
 import tex
 import re
 import logging
+from concurrent.futures import ThreadPoolExecutor
+from functools import partial
 from tarjan import tarjan
 from subprocess import TimeoutExpired
 from tqdm import tqdm
@@ -111,17 +114,19 @@ def _build_testcode_header(file):
     return code
 
 
-def analyze(file, components_by_name):
-    for component in LatexDependency(file).load_components(components_by_name):
-        dependency = component[0]
-        loaded_refs = [components_by_name[ref.name]
-                       for ref in dependency.references() if ref.name in components_by_name]
-        try:
-            component = LatexComponent(component, loaded_refs)
-            for name in component.file_names:
-                components_by_name[name] = component
-        except TimeoutExpired:
-            logging.warn(f'Could not analyze {file}.')
+def analyze(components_by_name, pbar, file):
+    if file.name not in components_by_name:
+        for component in LatexDependency(file).load_components(components_by_name):
+            dependency = component[0]
+            loaded_refs = [components_by_name[ref.name]
+                           for ref in dependency.references() if ref.name in components_by_name]
+            try:
+                component = LatexComponent(component, loaded_refs)
+                for name in component.file_names:
+                    components_by_name[name] = component
+            except TimeoutExpired:
+                logging.warn(f'Could not analyze {file}.')
+    pbar.update()
 
 
 def include_appendix(components_by_name):
@@ -137,8 +142,12 @@ def include_appendix(components_by_name):
 
 def generate_database():
     components_by_name = {}
-    for name, file in tqdm(tex.FILE_RESOLVER.files_by_name.items(), desc='Indexing packages'):
-        if file.suffix in COMPONENT_EXTS and name not in components_by_name:
-            analyze(file, components_by_name)
+    files = list([f for f in tex.FILE_RESOLVER.files_by_name.values()
+                  if f.suffix in COMPONENT_EXTS])
+    pbar = tqdm(desc='Indexing packages', total=len(files))
+    analyze_file = partial(analyze, components_by_name, pbar)
+    with ThreadPoolExecutor(multiprocessing.cpu_count()) as executor:
+        executor.map(analyze_file, files)
+
     include_appendix(components_by_name)
     return components_by_name.values()
