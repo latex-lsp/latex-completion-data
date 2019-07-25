@@ -1,15 +1,17 @@
 from base64 import b64encode
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
 from PIL import Image, ImageOps
 from io import BytesIO
-from tqdm import tqdm
 from typing import List, Dict, Optional
+from util import with_progress
 import util
 import logging
 import tex
 import base64
 import pdf2image
+import multiprocessing
 
 
 SYMBOL_SIZE = (48, 48)
@@ -114,10 +116,10 @@ class UnrenderedSymbolDatabase:
     packages: List[UnrenderedSymbolPackage]
 
     def render(self):
-        packages = []
-        for package in tqdm(self.packages, desc='Rendering symbols'):
-            packages.append(package.render())
-        return packages
+        with ThreadPoolExecutor(multiprocessing.cpu_count()) as executor:
+            task = with_progress('Rendering symbols', len(
+                self.packages), UnrenderedSymbolPackage.render)
+            return list(executor.map(task, self.packages))
 
 
 SYMBOL_DATABASE = util.load_json('data/symbols.json', UnrenderedSymbolDatabase)

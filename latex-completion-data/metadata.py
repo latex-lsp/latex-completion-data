@@ -1,8 +1,8 @@
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from typing import List, Optional, Any, Union
-from tqdm import tqdm
 from main import Metadata
+from util import with_progress
 import requests
 import jsons
 import pypandoc
@@ -47,8 +47,7 @@ def query(name):
 
 
 def query_all():
+    packages = query_package_list()
     with ThreadPoolExecutor() as executor:
-        packages = query_package_list()
-        metadata = tqdm(executor.map(query, packages),
-                        desc='Querying metadata', total=len(packages))
-        return list(filter(None, metadata))
+        task = with_progress('Querying metadata', len(packages), query)
+        return list(filter(None, executor.map(task, packages)))

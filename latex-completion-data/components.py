@@ -6,8 +6,8 @@ from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 from tarjan import tarjan
 from subprocess import TimeoutExpired
-from tqdm import tqdm
 from appendix import APPENDIX
+from util import with_progress
 
 FILE_REGEX = re.compile(r'[^\s\r\n]+\.(?:sty|tex|def|cls)')
 PRIMITIVE_REGEX = re.compile(r'[a-zA-Z]+')
@@ -114,7 +114,7 @@ def _build_testcode_header(file):
     return code
 
 
-def analyze(components_by_name, pbar, file):
+def analyze(components_by_name, file):
     if file.name not in components_by_name:
         for component in LatexDependency(file).load_components(components_by_name):
             dependency = component[0]
@@ -126,7 +126,6 @@ def analyze(components_by_name, pbar, file):
                     components_by_name[name] = component
             except TimeoutExpired:
                 logging.warn(f'Could not analyze {file}.')
-    pbar.update()
 
 
 def include_appendix(components_by_name):
@@ -144,10 +143,11 @@ def generate_database():
     components_by_name = {}
     files = list([f for f in tex.FILE_RESOLVER.files_by_name.values()
                   if f.suffix in COMPONENT_EXTS])
-    pbar = tqdm(desc='Indexing packages', total=len(files))
-    analyze_file = partial(analyze, components_by_name, pbar)
+
     with ThreadPoolExecutor(multiprocessing.cpu_count()) as executor:
-        executor.map(analyze_file, files)
+        task = with_progress('Indexing packages', len(
+            files), partial(analyze, components_by_name))
+        executor.map(task, files)
 
     include_appendix(components_by_name)
     return components_by_name.values()
