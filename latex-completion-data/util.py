@@ -19,7 +19,8 @@ def with_progress(desc, total, f):
     pbar = tqdm(desc=desc, total=total)
 
     def do_work(arg):
-        f(arg)
+        result = f(arg)
         pbar.update()
+        return result
 
     return do_work
