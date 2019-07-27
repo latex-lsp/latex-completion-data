@@ -78,8 +78,7 @@ def main():
                     dst_command.image = src_command.image
                     dst_command.parameters = src_command.parameters
 
-    database.metadata = metadata.query_all()
-
+    database.metadata = metadata.extract()
     json = jsons.dumps(database, key_transformer=KEY_TRANSFORMER_CAMELCASE)
     path = Path(os.getcwd()) / 'completion.json'
     path.write_text(json)

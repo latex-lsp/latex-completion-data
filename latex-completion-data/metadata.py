@@ -1,53 +1,27 @@
-from concurrent.futures import ThreadPoolExecutor
-from dataclasses import dataclass
-from typing import List, Optional, Any, Union
 from main import Metadata
-from util import with_progress
+from pathlib import Path
+from components import COMPONENT_EXTS
+from tqdm import tqdm
 import requests
-import jsons
-import pypandoc
+import tlpdb
 
 
-@dataclass
-class Description:
-    language: Optional[str]
-    text: str
+TEXLIVE_TLPDB_URL = 'http://mirror.ctan.org/tex-archive/systems/texlive/tlnet/tlpkg/texlive.tlpdb'
 
 
-@dataclass
-class Response:
-    name: str
-    caption: str
-    descriptions: List[Description]
+def extract():
+    lines = requests.get(TEXLIVE_TLPDB_URL).text.splitlines()
+    packages, _ = tlpdb.packages_from_tlpdb(lines)
 
+    metadata = []
+    for package in tqdm(packages, desc='Extracting metadata'):
+        if package.name.startswith('00'):
+            continue
 
-@dataclass
-class Error:
-    errors: Any
-
-
-def query_package_list():
-    packages = requests.get('https://ctan.org/json/2.0/packages').json()
-    return list(map(lambda pkg: pkg['key'], packages))
-
-
-def query(name):
-    json = requests.get(f'http://ctan.org/json/2.0/pkg/{name}').text
-    response = jsons.loads(
-        json, Union[Response, Error], key_transformer=jsons.KEY_TRANSFORMER_SNAKECASE)
-
-    if isinstance(response, Error):
-        return None
-
-    html = next(
-        (d.text for d in response.descriptions if not d.language), '')
-    description = pypandoc.convert_text(html, 'markdown', format='html')
-
-    return Metadata(name, response.caption, description)
-
-
-def query_all():
-    packages = query_package_list()
-    with ThreadPoolExecutor() as executor:
-        task = with_progress('Querying metadata', len(packages), query)
-        return list(filter(None, executor.map(task, packages)))
+        for file in package.runfiles:
+            file = Path(file)
+            if file.suffix in COMPONENT_EXTS:
+                metadata.append(
+                    Metadata(file.stem, package.shortdesc, package.longdesc))
+                    
+    return metadata
