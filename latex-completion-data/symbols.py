@@ -99,7 +99,7 @@ class UnrenderedSymbolPackage:
 
         buf = BytesIO()
         image.save(buf, format='PNG')
-        return b64encode(buf.getvalue())
+        return str(b64encode(buf.getvalue()), encoding='utf-8')
 
     def _count_symbols(self):
         count = 0
