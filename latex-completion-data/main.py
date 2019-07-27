@@ -1,9 +1,13 @@
+from pathlib import Path
+from jsons import KEY_TRANSFORMER_CAMELCASE
 import logging
 import symbols
 import tex
 import util
 import components
 import metadata
+import os
+import jsons
 
 
 class Database:
@@ -63,6 +67,11 @@ def main():
 
     for src_package in symbols.SYMBOL_DATABASE.render():
         dst_package = database.find_package(src_package.name)
+        if dst_package is None:
+            logging.error(
+                f'Package {src_package.name} was not indexed but has symbols')
+            continue
+
         for src_command in src_package.commands:
             for dst_command in dst_package.commands:
                 if src_command.name == dst_command.name:
@@ -70,7 +79,10 @@ def main():
                     dst_command.parameters = src_command.parameters
 
     database.metadata = metadata.query_all()
-    util.save_json('completion.json', database)
+
+    json = jsons.dumps(database, key_transformer=KEY_TRANSFORMER_CAMELCASE)
+    path = Path(os.getcwd()) / 'completion.json'
+    path.write_text(json)
 
 
 if __name__ == '__main__':
