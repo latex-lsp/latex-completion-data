@@ -94,7 +94,7 @@ class UnrenderedSymbolPackage:
 
     def _postprocess_image(self, image):
         image = image.crop(ImageOps.invert(image).getbbox())
-        image = image.resize(SYMBOL_SIZE, resample=Image.BILINEAR)
+        image.thumbnail(SYMBOL_SIZE, Image.BILINEAR)
         image = ImageOps.expand(image, SYMBOL_PADDING, (255, 255, 255))
 
         buf = BytesIO()
