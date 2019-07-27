@@ -42,7 +42,7 @@ class UnrenderedSymbolPackage:
         result = tex.compile(self._build_render_code(), timeout=60, pdf=True)
         pdf_path = result.find('pdf')
         images = [self._postprocess_image(img)
-                  for img in pdf2image.convert_from_path(str(pdf_path), dpi=4096)]
+                  for img in pdf2image.convert_from_path(str(pdf_path), dpi=3000)]
 
         image_index = 0
         for cmd in self.commands:
