@@ -82,6 +82,7 @@ def main():
     json = jsons.dumps(database, key_transformer=KEY_TRANSFORMER_CAMELCASE)
     path = Path(os.getcwd()) / 'completion.json'
     path.write_text(json)
+    print()
 
 
 if __name__ == '__main__':

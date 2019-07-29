@@ -9,19 +9,21 @@ import tlpdb
 TEXLIVE_TLPDB_URL = 'http://mirror.ctan.org/tex-archive/systems/texlive/tlnet/tlpkg/texlive.tlpdb'
 
 
+def is_valid_package(package):
+    return not package.name.startswith('00') and package.shortdesc and package.longdesc
+
+
 def extract():
     lines = requests.get(TEXLIVE_TLPDB_URL).text.splitlines()
     packages, _ = tlpdb.packages_from_tlpdb(lines)
 
     metadata = []
-    for package in tqdm(packages, desc='Extracting metadata'):
-        if package.name.startswith('00'):
-            continue
+    for package in tqdm(filter(is_valid_package, packages), desc='Extracting metadata'):
+        caption = package.shortdesc.strip()
+        description = package.longdesc.strip()
 
-        for file in package.runfiles:
-            file = Path(file)
-            if file.suffix in COMPONENT_EXTS:
-                metadata.append(
-                    Metadata(file.stem, package.shortdesc, package.longdesc))
-                    
+        files = [Path(file) for file in package.runfiles]
+        for file in (f for f in files if f.suffix in COMPONENT_EXTS):
+            metadata.append(Metadata(file.stem, caption, description))
+
     return metadata
