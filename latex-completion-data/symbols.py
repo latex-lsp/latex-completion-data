@@ -18,6 +18,21 @@ SYMBOL_SIZE = (48, 48)
 SYMBOL_PADDING = 5
 
 
+def load_unicode_symbols():
+    with open('data/unimathsymbols.txt', 'r', encoding='utf-8') as f:
+        lines = [l.strip().split('^') for l in f if not l.startswith('#')]
+        symbols = {}
+        for line in lines:
+            candidates = (n[1:] for n in line if n.startswith('\\'))
+            glyph = line[1]
+            for cnd in candidates:
+                symbols.setdefault(cnd, glyph)
+        return symbols
+
+
+UNICODE_SYMBOLS = load_unicode_symbols()
+
+
 @dataclass
 class UnrenderedSymbolCommandArgument:
     name: str
@@ -51,7 +66,8 @@ class UnrenderedSymbolPackage:
                 cmd_image = images[image_index]
                 image_index += 1
 
-            rendered_cmd = SymbolCommand(cmd.name, cmd_image)
+            glyph = UNICODE_SYMBOLS.get(cmd.name)
+            rendered_cmd = SymbolCommand(cmd.name, cmd_image, glyph)
             for parameter in cmd.parameters:
                 args = []
                 for arg in parameter:
@@ -132,9 +148,10 @@ class SymbolCommandArgument:
 
 
 class SymbolCommand:
-    def __init__(self, name, image):
+    def __init__(self, name, image, glyph=None):
         self.name = name
         self.image = image
+        self.glyph = glyph
         self.parameters = []
 
 

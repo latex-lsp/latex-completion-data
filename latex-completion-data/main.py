@@ -39,6 +39,7 @@ class Command:
     def __init__(self, name):
         self.name = name
         self.image = None
+        self.glyph = None
         self.parameters = []
         pass
 
@@ -76,6 +77,7 @@ def main():
             for dst_command in dst_package.commands:
                 if src_command.name == dst_command.name:
                     dst_command.image = src_command.image
+                    dst_command.glyph = src_command.glyph
                     dst_command.parameters = src_command.parameters
 
     database.metadata = metadata.extract()
