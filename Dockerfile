@@ -12,9 +12,9 @@ ENV LC_ALL en_US.UTF-8
 ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US.UTF-8
 
-WORKDIR /latex-completion-data
-COPY . /latex-completion-data
-
+WORKDIR /app
+COPY . /app
 RUN pipenv install --system --deploy --ignore-pipfile
 
-CMD [ "python3", "latex-completion-data/main.py" ]
+WORKDIR /app/latex-completion-data
+CMD [ "python3", "main.py" ]
