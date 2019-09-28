@@ -649,9 +649,12 @@
         "x",
         "y"
       ],
-      "environments": [
-        "tikzpicture"
-      ]
+      "environments": ["tikzpicture"]
+    },
+    {
+      "name": "subcaption.sty",
+      "commands": [],
+      "environments": ["subtable"]
     }
   ]
 }
