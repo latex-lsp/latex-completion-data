@@ -66,8 +66,8 @@ def compile(code, fmt=Format.LATEX, timeout=10, pdf=False):
         raise error
 
 
-TEX_DIR_PATTERNS = ['tex/plain/**', 'tex/generic/**', 'tex/latex/**', 'tex/latex/pgf/**',
-                    'tex/luatex/**', 'tex/lualatex/**', 'tex/xetex/**', 'tex/xelatex/**']
+TEX_DIR_PATTERNS = ['tex/plain/', 'tex/generic/', 'tex/latex/',
+                    'tex/luatex/', 'tex/lualatex/', 'tex/xetex/', 'tex/xelatex/']
 
 
 class FileResolver:
@@ -89,7 +89,7 @@ class FileResolver:
         for line in tqdm(lines, desc='Loading resolver'):
             if line.endswith(':'):
                 current_dir = root_dir / line[:-1]
-            elif any(current_dir.match(pat) for pat in TEX_DIR_PATTERNS):
+            elif any(pat in current_dir.as_posix() for pat in TEX_DIR_PATTERNS):
                 file = current_dir / (line)
                 if file.suffix:
                     yield file
