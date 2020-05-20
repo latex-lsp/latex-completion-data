@@ -19,7 +19,8 @@ SYMBOL_PADDING = 5
 
 
 def load_unicode_symbols():
-    with open('data/unimathsymbols.txt', 'r', encoding='utf-8') as f:
+    file = Path(__file__).parent / 'data/unimathsymbols.txt'
+    with file.open(encoding='utf-8') as f:
         lines = [l.strip().split('^') for l in f if not l.startswith('#')]
         symbols = {}
         for line in lines:
