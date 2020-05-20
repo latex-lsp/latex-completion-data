@@ -1,4 +1,4 @@
-from main import Metadata
+from database import Metadata
 from pathlib import Path
 from components import COMPONENT_EXTS
 from tqdm import tqdm
