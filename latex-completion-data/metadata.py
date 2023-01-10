@@ -4,9 +4,7 @@ from components import COMPONENT_EXTS
 from tqdm import tqdm
 import requests
 import tlpdb
-
-
-TEXLIVE_TLPDB_URL = 'http://mirror.ctan.org/tex-archive/systems/texlive/tlnet/tlpkg/texlive.tlpdb'
+from tex import find_root_dir
 
 
 def is_valid_package(package):
@@ -14,7 +12,7 @@ def is_valid_package(package):
 
 
 def extract():
-    lines = requests.get(TEXLIVE_TLPDB_URL).text.splitlines()
+    lines = open(find_root_dir().parent.as_posix() + "/tlpkg/texlive.tlpdb").readlines()
     packages, _ = tlpdb.packages_from_tlpdb(lines)
 
     metadata = []

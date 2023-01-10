@@ -10,7 +10,7 @@ from database import Component, Command
 from util import with_progress
 from pathlib import Path
 
-FILE_REGEX = re.compile(r'\(([^\r\n()]+\.(sty|cls))')
+FILE_REGEX = re.compile(r'\(([^\r\n()\s`]+\.(sty|cls))')
 CMD_REGEX = re.compile(r'^cmd:([a-zA-Z\*]+)$', re.MULTILINE)
 COMPONENT_EXTS = ['.cls', '.sty']
 
@@ -32,7 +32,11 @@ class LatexPackage:
         refs = [f for f in includes if f != file and f.name != 'minimal.cls']
 
         cmds = {match for match in CMD_REGEX.findall(log)}
+        if len(cmds) == 0:
+            cmds = set()
         envs = {cmd for cmd in cmds if f'end{cmd}' in cmds}
+        if len(envs) == 0:
+            envs = set()
         return LatexPackage(file, refs, cmds, envs)
 
     @staticmethod
@@ -80,10 +84,10 @@ class LatexPackage:
 
 
 def analyze(pkgs_by_name, file):
-    pkgs_by_name[file.name] = LatexPackage(file, [], {}, {})
+    pkgs_by_name[file.name] = LatexPackage(file, [], set(), set())
     try:
         pkgs_by_name[file.name] = LatexPackage.load(file)
-    except TimeoutError:
+    except TimeoutExpired:
         logging.warn(f'Could not analyze {file}.')
 
 

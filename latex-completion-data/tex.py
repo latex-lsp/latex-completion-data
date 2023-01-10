@@ -66,19 +66,20 @@ def compile(code, fmt=Format.LATEX, timeout=10, pdf=False):
         raise error
 
 
-TEX_DIR_PATTERNS = ['tex/plain/', 'tex/generic/', 'tex/latex/',
+TEX_DIR_PATTERNS = ['tex/plain/', 'tex/generic/', 'tex/latex/', 'tex/platex/',
                     'tex/luatex/', 'tex/lualatex/', 'tex/xetex/', 'tex/xelatex/']
 
+def find_root_dir():
+    cmd = ['kpsewhich', '--var-value', 'TEXMFDIST']
+    output = subprocess.run(cmd, capture_output=True, text=True).stdout
+    return Path(output.splitlines()[0])
 
 class FileResolver:
     def __init__(self):
-        root_dir = self._find_root_dir()
+        root_dir = find_root_dir()
         self.files_by_name = {x.name: x for x in self._read_database(root_dir)}
 
-    def _find_root_dir(self):
-        cmd = ['kpsewhich', '--var-value', 'TEXMFDIST']
-        output = subprocess.run(cmd, capture_output=True, text=True).stdout
-        return Path(output.splitlines()[0])
+
 
     def _read_database(self, root_dir):
         db_file = root_dir / 'ls-R'
