@@ -9,6 +9,7 @@ from subprocess import TimeoutExpired
 from database import Component, Command
 from util import with_progress
 from pathlib import Path
+from appendix import APPENDIX_MAP
 
 FILE_REGEX = re.compile(r'\(([^\r\n()\s`]+\.(sty|cls))')
 CMD_REGEX = re.compile(r'^cmd:([a-zA-Z\*]+)$', re.MULTILINE)
@@ -32,6 +33,11 @@ class LatexPackage:
         refs = [f for f in includes if f != file and f.name != 'minimal.cls']
         cmds = {match for match in CMD_REGEX.findall(log)}
         envs = {cmd for cmd in cmds if f'end{cmd}' in cmds}
+
+        if file.name in APPENDIX_MAP.keys():
+            cmds.update(APPENDIX_MAP[file.name].commands)
+            envs.update(APPENDIX_MAP[file.name].environments)
+
         return LatexPackage(file, refs, cmds, envs)
 
     @staticmethod
