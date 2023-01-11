@@ -17,3 +17,4 @@ class Appendix:
 
 
 APPENDIX = util.load_json('data/appendix.json', Appendix)
+APPENDIX_MAP = {f.name: f for f in APPENDIX.components}
