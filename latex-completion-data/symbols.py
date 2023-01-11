@@ -86,6 +86,8 @@ class UnrenderedSymbolPackage:
         lines.append("\\standaloneenv{center}")
         lines.append("\\usepackage[utf8]{inputenc}")
         lines.append(f"\\usepackage[{self.font_encoding}]{{fontenc}}")
+        lines.append("\\pdfmapline{=dictsym DictSym <dictsym.pfb}")
+        lines.append("\\pdfmapline{=pigpen <pigpen.pfa}")
         if self.name:
             lines.append(f"\\usepackage{{{self.name}}}")
 
