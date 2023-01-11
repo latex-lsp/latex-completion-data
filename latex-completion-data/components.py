@@ -30,13 +30,8 @@ class LatexPackage:
         log = result.read_log()
         includes = (Path(match[0]) for match in FILE_REGEX.findall(log))
         refs = [f for f in includes if f != file and f.name != 'minimal.cls']
-
         cmds = {match for match in CMD_REGEX.findall(log)}
-        if len(cmds) == 0:
-            cmds = set()
         envs = {cmd for cmd in cmds if f'end{cmd}' in cmds}
-        if len(envs) == 0:
-            envs = set()
         return LatexPackage(file, refs, cmds, envs)
 
     @staticmethod
